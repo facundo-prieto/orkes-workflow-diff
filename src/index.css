@@ -883,3 +883,30 @@ pre,
   border-radius: 8px;
   overflow: hidden;
 }
+
+/* ---------- Orkes-native graph renderer ---------- */
+
+.orkes-graph-view {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: auto;
+  background: #e6e6e6; /* matches orkes-workflow-visualizer canvas */
+}
+
+.orkes-graph-legend {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.orkes-legend-unmapped {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.renderer-toggle {
+  margin-left: 4px;
+}

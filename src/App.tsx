@@ -8,6 +8,7 @@ import {
   type InputMode,
 } from "./components/InputPanel";
 import { GraphView } from "./components/GraphView";
+import { OrkesGraphView } from "./components/OrkesGraphView";
 import { TaskDetailsDrawer } from "./components/TaskDetailsDrawer";
 import { JsonDiffView } from "./components/JsonDiffView";
 import { diffWorkflows, type MergedNode } from "./lib/workflowDiff";
@@ -24,6 +25,8 @@ import { EXAMPLE_AFTER, EXAMPLE_BEFORE } from "./examples";
 
 type Screen = "input" | "review";
 type ReviewTab = "graph" | "json";
+/** Graph renderer: official orkes-workflow-visualizer vs our xyflow view. */
+type GraphRenderer = "orkes" | "classic";
 
 /**
  * Build-time flag: PR import needs the Bun server, so static builds (e.g.
@@ -52,6 +55,7 @@ function clearShareHash(): void {
 export function App() {
   const [screen, setScreen] = useState<Screen>("input");
   const [tab, setTab] = useState<ReviewTab>("graph");
+  const [renderer, setRenderer] = useState<GraphRenderer>("orkes");
   const [inputMode, setInputMode] = useState<InputMode>("paste");
   const [beforeText, setBeforeText] = useState("");
   const [afterText, setAfterText] = useState("");
@@ -247,6 +251,22 @@ export function App() {
                 JSON
               </button>
             </nav>
+            {tab === "graph" ? (
+              <nav className="tabs renderer-toggle" title="Graph renderer">
+                <button
+                  className={`tab${renderer === "orkes" ? " tab-active" : ""}`}
+                  onClick={() => setRenderer("orkes")}
+                >
+                  Orkes
+                </button>
+                <button
+                  className={`tab${renderer === "classic" ? " tab-active" : ""}`}
+                  onClick={() => setRenderer("classic")}
+                >
+                  Classic
+                </button>
+              </nav>
+            ) : null}
             <button className="btn" onClick={handleCopyLink}>
               {copied ? "Copied!" : "Copy share link"}
             </button>
@@ -287,7 +307,16 @@ export function App() {
         ) : mergedGraph && parsed ? (
           tab === "graph" ? (
             <div className="review-graph">
-              <GraphView graph={mergedGraph} onSelectNode={setSelectedNode} />
+              {renderer === "orkes" ? (
+                <OrkesGraphView
+                  before={parsed.before}
+                  after={parsed.after}
+                  graph={mergedGraph}
+                  onSelectNode={setSelectedNode}
+                />
+              ) : (
+                <GraphView graph={mergedGraph} onSelectNode={setSelectedNode} />
+              )}
               {selectedNode ? (
                 <TaskDetailsDrawer
                   node={selectedNode}
