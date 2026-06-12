@@ -25,6 +25,15 @@ import { EXAMPLE_AFTER, EXAMPLE_BEFORE } from "./examples";
 type Screen = "input" | "review";
 type ReviewTab = "graph" | "json";
 
+/**
+ * Build-time flag: PR import needs the Bun server, so static builds (e.g.
+ * GitHub Pages) are produced with BUN_PUBLIC_PR_IMPORT=off (`bun run
+ * build:pages`) to hide the tab. Defaults to enabled for `bun dev`/`bun
+ * start`. The value is inlined into the bundle by Bun (bunfig `[serve.static]
+ * env` in dev, `--env='BUN_PUBLIC_*'` in builds).
+ */
+const PR_IMPORT_ENABLED = process.env.BUN_PUBLIC_PR_IMPORT !== "off";
+
 interface ParsedPair {
   before: WorkflowDefinition | null;
   after: WorkflowDefinition | null;
@@ -63,6 +72,8 @@ export function App() {
   const [shareLabel, setShareLabel] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const prImportAvailable = PR_IMPORT_ENABLED;
 
   // Open straight into review when the URL carries a share payload.
   useEffect(() => {
@@ -253,7 +264,8 @@ export function App() {
               <div className="share-error parse-error">{shareError}</div>
             ) : null}
             <InputPanel
-              mode={inputMode}
+              prImportAvailable={prImportAvailable}
+              mode={prImportAvailable ? inputMode : "paste"}
               onModeChange={setInputMode}
               beforeText={beforeText}
               afterText={afterText}

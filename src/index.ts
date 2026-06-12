@@ -4,6 +4,17 @@ import index from "./index.html";
 import { parsePrRef } from "./lib/prImport";
 import { fetchPrWorkflows, PrImportError } from "./server/github";
 
+// The frontend reads BUN_PUBLIC_PR_IMPORT, inlined at bundle time (bunfig
+// [serve.static] env). Bun snapshots env at process launch, so it must be set
+// in the environment — the dev/start scripts default it to "on". An unset var
+// leaves `process.env.…` in the browser bundle, which crashes.
+if (!process.env.BUN_PUBLIC_PR_IMPORT) {
+  console.warn(
+    "BUN_PUBLIC_PR_IMPORT is not set — the frontend bundle will crash in the browser. " +
+      "Use `bun dev` / `bun start` (they default it to \"on\").",
+  );
+}
+
 const server = serve({
   routes: {
     /**

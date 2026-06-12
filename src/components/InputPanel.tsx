@@ -59,6 +59,8 @@ function fileName(path: string): string {
 }
 
 interface InputPanelProps {
+  /** False on static hosts without the Bun server — hides the PR tab. */
+  prImportAvailable: boolean;
   mode: InputMode;
   onModeChange: (mode: InputMode) => void;
 
@@ -84,6 +86,7 @@ interface InputPanelProps {
 
 export function InputPanel(props: InputPanelProps) {
   const {
+    prImportAvailable,
     mode,
     onModeChange,
     beforeText,
@@ -107,20 +110,22 @@ export function InputPanel(props: InputPanelProps) {
 
   return (
     <div className="input-screen">
-      <nav className="mode-tabs" aria-label="Input source">
-        <button
-          className={`mode-tab${mode === "paste" ? " mode-tab-active" : ""}`}
-          onClick={() => onModeChange("paste")}
-        >
-          Paste JSON
-        </button>
-        <button
-          className={`mode-tab${mode === "pr" ? " mode-tab-active" : ""}`}
-          onClick={() => onModeChange("pr")}
-        >
-          From GitHub PR
-        </button>
-      </nav>
+      {prImportAvailable ? (
+        <nav className="mode-tabs" aria-label="Input source">
+          <button
+            className={`mode-tab${mode === "paste" ? " mode-tab-active" : ""}`}
+            onClick={() => onModeChange("paste")}
+          >
+            Paste JSON
+          </button>
+          <button
+            className={`mode-tab${mode === "pr" ? " mode-tab-active" : ""}`}
+            onClick={() => onModeChange("pr")}
+          >
+            From GitHub PR
+          </button>
+        </nav>
+      ) : null}
 
       {mode === "paste" ? (
         <>
