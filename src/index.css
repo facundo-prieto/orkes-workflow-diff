@@ -442,6 +442,12 @@ pre,
   border-color: var(--accent);
 }
 
+/* Error banner when a shared link fails to decode */
+
+.share-error {
+  margin: 16px 24px 0;
+}
+
 /* ---------- Review: graph ---------- */
 
 .review-graph {

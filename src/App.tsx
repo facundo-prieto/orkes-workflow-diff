@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import "./index.css";
 
@@ -13,6 +13,13 @@ import { JsonDiffView } from "./components/JsonDiffView";
 import { diffWorkflows, type MergedNode } from "./lib/workflowDiff";
 import type { WorkflowDefinition } from "./lib/workflowGraph";
 import type { PrImportResult, PrWorkflowFile } from "./lib/prImport";
+import {
+  decodeShare,
+  encodeShare,
+  SHARE_HASH_KEY,
+  sharePayloadFromHash,
+  type SharePayload,
+} from "./lib/share";
 import { EXAMPLE_AFTER, EXAMPLE_BEFORE } from "./examples";
 
 type Screen = "input" | "review";
@@ -21,6 +28,16 @@ type ReviewTab = "graph" | "json";
 interface ParsedPair {
   before: WorkflowDefinition | null;
   after: WorkflowDefinition | null;
+}
+
+/** Encode the current pair into the URL hash so the address bar is shareable. */
+async function writeShareHash(payload: SharePayload): Promise<void> {
+  const encoded = await encodeShare(payload);
+  history.replaceState(null, "", `#${SHARE_HASH_KEY}=${encoded}`);
+}
+
+function clearShareHash(): void {
+  history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 
 export function App() {
@@ -42,6 +59,33 @@ export function App() {
   // Path of the PR workflow currently under review; null = reviewing a paste.
   const [prSelectedPath, setPrSelectedPath] = useState<string | null>(null);
 
+  // Share-link state
+  const [shareLabel, setShareLabel] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Open straight into review when the URL carries a share payload.
+  useEffect(() => {
+    const encoded = sharePayloadFromHash(window.location.hash);
+    if (!encoded) return;
+    decodeShare(encoded)
+      .then(payload => {
+        setParsed({ before: payload.before, after: payload.after });
+        setShareLabel(payload.label ?? null);
+        setSelectedNode(null);
+        setTab("graph");
+        setScreen("review");
+      })
+      .catch(err => {
+        setShareError(
+          `Could not open the shared diff: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+        clearShareHash();
+      });
+  }, []);
+
   const mergedGraph = useMemo(
     () => (parsed ? diffWorkflows(parsed.before, parsed.after) : null),
     [parsed],
@@ -57,9 +101,11 @@ export function App() {
 
     setParsed({ before: before.definition, after: after.definition });
     setPrSelectedPath(null);
+    setShareLabel(null);
     setSelectedNode(null);
     setTab("graph");
     setScreen("review");
+    void writeShareHash({ before: before.definition, after: after.definition });
   };
 
   const handleLoadExample = () => {
@@ -97,9 +143,15 @@ export function App() {
   const handleSelectPrWorkflow = (workflow: PrWorkflowFile) => {
     setParsed({ before: workflow.before, after: workflow.after });
     setPrSelectedPath(workflow.path);
+    setShareLabel(null);
     setSelectedNode(null);
     setTab("graph");
     setScreen("review");
+    void writeShareHash({
+      before: workflow.before,
+      after: workflow.after,
+      label: workflow.path,
+    });
   };
 
   const handleEditInputs = () => {
@@ -107,6 +159,18 @@ export function App() {
     setInputMode(prSelectedPath !== null ? "pr" : "paste");
     setScreen("input");
     setSelectedNode(null);
+    clearShareHash();
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard can be unavailable (e.g. non-secure context); the URL is
+      // still in the address bar, so just skip the feedback.
+    }
   };
 
   const reviewingPr = prSelectedPath !== null && prResult !== null;
@@ -139,7 +203,9 @@ export function App() {
                 ))}
               </select>
             ) : (
-              <span className="app-workflow-name">{workflowName}</span>
+              <span className="app-workflow-name" title={shareLabel ?? undefined}>
+                {workflowName}
+              </span>
             )
           ) : null}
           {screen === "review" && reviewingPr ? (
@@ -170,6 +236,9 @@ export function App() {
                 JSON
               </button>
             </nav>
+            <button className="btn" onClick={handleCopyLink}>
+              {copied ? "Copied!" : "Copy share link"}
+            </button>
             <button className="btn" onClick={handleEditInputs}>
               {reviewingPr ? "Back to PR" : "Edit inputs"}
             </button>
@@ -179,25 +248,30 @@ export function App() {
 
       <main className="app-main">
         {screen === "input" ? (
-          <InputPanel
-            mode={inputMode}
-            onModeChange={setInputMode}
-            beforeText={beforeText}
-            afterText={afterText}
-            beforeError={beforeError}
-            afterError={afterError}
-            onBeforeChange={setBeforeText}
-            onAfterChange={setAfterText}
-            onCompare={handleCompare}
-            onLoadExample={handleLoadExample}
-            prRefText={prRefText}
-            onPrRefChange={setPrRefText}
-            onLoadPr={handleLoadPr}
-            prLoading={prLoading}
-            prError={prError}
-            prResult={prResult}
-            onSelectPrWorkflow={handleSelectPrWorkflow}
-          />
+          <>
+            {shareError ? (
+              <div className="share-error parse-error">{shareError}</div>
+            ) : null}
+            <InputPanel
+              mode={inputMode}
+              onModeChange={setInputMode}
+              beforeText={beforeText}
+              afterText={afterText}
+              beforeError={beforeError}
+              afterError={afterError}
+              onBeforeChange={setBeforeText}
+              onAfterChange={setAfterText}
+              onCompare={handleCompare}
+              onLoadExample={handleLoadExample}
+              prRefText={prRefText}
+              onPrRefChange={setPrRefText}
+              onLoadPr={handleLoadPr}
+              prLoading={prLoading}
+              prError={prError}
+              prResult={prResult}
+              onSelectPrWorkflow={handleSelectPrWorkflow}
+            />
+          </>
         ) : mergedGraph && parsed ? (
           tab === "graph" ? (
             <div className="review-graph">

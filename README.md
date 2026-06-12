@@ -34,6 +34,20 @@ The server fetches the PR's changed files, keeps the `.json` files that look lik
 
 **Auth:** the server shells out to the [GitHub CLI](https://cli.github.com/) (`gh api …`), so it reuses whatever `gh auth login` session exists on the machine running `bun dev` — no tokens to configure. Private repos work as long as your `gh` account can see them.
 
+## Shareable URLs (no backend required)
+
+Whenever a diff is opened — from paste or from a PR — the full Before/After pair is encoded into the URL hash (`#wf=…`), and **Copy share link** in the header copies it. Anyone opening that link sees the same diff: the entire content lives in the URL, so the receiving side needs no backend and no access to the PR. The built `dist/` can be hosted on any static host (GitHub Pages, S3, …) and share links keep working; only the *PR import* tab needs the Bun server.
+
+The encoding (`src/lib/share.ts`) is `deflate-raw` compression (native `CompressionStream`, browsers + Bun) followed by base64url, prefixed with a format version. A real-world ~37 KB before+after pair compresses to a ~3.5 K-character URL. Because the payload is a hash fragment it is never sent to any server, so server/proxy URL limits don't apply; browsers and GitHub comments handle these lengths fine.
+
+For CI, generate a link without the app:
+
+```bash
+bun scripts/share-url.ts --base https://your-static-host/ --label "My_Workflow.json" before.json after.json
+# Use "-" for a missing side, e.g. a brand-new workflow:
+bun scripts/share-url.ts --base https://your-static-host/ - after.json
+```
+
 | Path | Purpose |
 | --- | --- |
 | `src/lib/prImport.ts` | PR ref parsing + workflow-definition detection (pure) |
