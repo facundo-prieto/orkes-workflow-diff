@@ -1,9 +1,39 @@
 import { serve } from "bun";
 import index from "./index.html";
 
+import { parsePrRef } from "./lib/prImport";
+import { fetchPrWorkflows, PrImportError } from "./server/github";
+
 const server = serve({
   routes: {
-    // Serve index.html for all routes (single-page app).
+    /**
+     * Import workflow JSONs from a GitHub PR.
+     * GET /api/pr?ref=<PR URL | owner/repo#N | N>
+     */
+    "/api/pr": {
+      GET: async req => {
+        const refInput = new URL(req.url).searchParams.get("ref") ?? "";
+        const ref = parsePrRef(refInput);
+        if (!ref) {
+          return Response.json(
+            { error: "Could not parse PR reference. Use a PR URL, owner/repo#123 or a PR number." },
+            { status: 400 },
+          );
+        }
+        try {
+          return Response.json(await fetchPrWorkflows(ref));
+        } catch (err) {
+          const message =
+            err instanceof PrImportError
+              ? err.message
+              : "Unexpected error while fetching the PR.";
+          if (!(err instanceof PrImportError)) console.error(err);
+          return Response.json({ error: message }, { status: 502 });
+        }
+      },
+    },
+
+    // Serve index.html for all other routes (single-page app).
     "/*": index,
   },
 

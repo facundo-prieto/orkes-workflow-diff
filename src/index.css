@@ -247,6 +247,201 @@ pre,
   padding-bottom: 6px;
 }
 
+/* ---------- Input source mode tabs ---------- */
+
+.mode-tabs {
+  display: flex;
+  gap: 2px;
+  background: #edf1f5;
+  border-radius: 8px;
+  padding: 3px;
+  align-self: flex-start;
+}
+
+.mode-tab {
+  padding: 6px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.mode-tab-active {
+  background: var(--panel-bg);
+  color: var(--accent-dark);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(16, 42, 67, 0.12);
+}
+
+/* ---------- PR import ---------- */
+
+.pr-form {
+  display: flex;
+  gap: 12px;
+}
+
+.pr-input {
+  flex: 1;
+  max-width: 720px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.pr-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+}
+
+.pr-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  padding: 14px 16px;
+  max-width: 980px;
+}
+
+.pr-result-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pr-result-header a {
+  font-weight: 600;
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.pr-result-header a:hover {
+  text-decoration: underline;
+}
+
+.pr-result-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.pr-workflow-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-workflow-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+}
+
+.pr-workflow-item:hover {
+  border-color: var(--accent);
+  background: rgba(25, 118, 210, 0.04);
+}
+
+.pr-workflow-name {
+  font-weight: 600;
+}
+
+.pr-workflow-path {
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #edf1f5;
+  color: var(--text-muted);
+}
+
+.status-added {
+  background: var(--added-bg);
+  color: var(--added);
+}
+
+.status-removed {
+  background: var(--removed-bg);
+  color: var(--removed);
+}
+
+.status-modified,
+.status-renamed {
+  background: var(--changed-bg);
+  color: var(--changed);
+}
+
+.pr-skipped {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pr-skipped summary {
+  cursor: pointer;
+}
+
+.pr-skipped ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+/* Header widgets when reviewing a PR workflow */
+
+.workflow-select {
+  margin-left: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+  max-width: 360px;
+}
+
+.pr-link {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-dark);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.pr-link:hover {
+  border-color: var(--accent);
+}
+
 /* ---------- Review: graph ---------- */
 
 .review-graph {
