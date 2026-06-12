@@ -22,6 +22,12 @@ bun start          # serve the app in production mode
 
 Click **Load example** on the input screen to see a realistic workflow pair (SWITCH, FORK_JOIN/JOIN, DO_WHILE, SUB_WORKFLOW, HTTP) with an added task, a removed task and a changed task.
 
+## Hosted version (GitHub Pages)
+
+The app is deployed as a static page at **https://facundo-prieto.github.io/orkes-workflow-diff/** — paste mode and share links work there with no backend. PR import needs the Bun server, so static builds are produced with the build-time flag `BUN_PUBLIC_PR_IMPORT=off` (`bun run build:pages`), which hides the *From GitHub PR* tab; run `bun dev` locally to use PR import. (GitHub Pages has no runtime environment, so the flag is inlined into the bundle at build time.)
+
+To redeploy after changes: `bun run build:pages`, then push the contents of `dist/` to the `gh-pages` branch.
+
 ## Importing from a GitHub PR
 
 Switch the input screen to **From GitHub PR** and enter any of:
