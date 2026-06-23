@@ -70,6 +70,60 @@ export function diffStatusToVisualizerStatus(
   return undefined;
 }
 
+/** Which single version a side-by-side pane is rendering. */
+export type DiffSide = "before" | "after";
+
+/**
+ * Diff statuses worth highlighting within each single-version pane. The before
+ * pane can only show what existed before (removed/changed); the after pane can
+ * only show what exists after (added/changed). "unchanged" tasks stay plain on
+ * both sides.
+ */
+const SIDE_STATUSES: Record<DiffSide, ReadonlySet<NodeStatus>> = {
+  before: new Set<NodeStatus>(["removed", "changed"]),
+  after: new Set<NodeStatus>(["added", "changed"]),
+};
+
+/**
+ * Stamp one version's task tree with diff-derived execution statuses so a
+ * native WorkflowVisualizer pane self-annotates what changed — the before pane
+ * lights up removed/changed tasks, the after pane lights up added/changed.
+ * Tasks whose status is irrelevant to the side (or unchanged) stay plain.
+ *
+ * `statusByRef` comes from the merged diff graph (`MergedNode.ref` →
+ * `MergedNode.status`); refs not present (e.g. synthetic start/final nodes the
+ * visualizer adds itself) are simply left unstamped.
+ */
+export function buildSideDefinition(
+  def: WorkflowDefinition | null,
+  statusByRef: Map<string, NodeStatus>,
+  side: DiffSide,
+): WorkflowDefinition | null {
+  if (!def) return null;
+  const relevant = SIDE_STATUSES[side];
+
+  const stampTasks = (tasks: WorkflowTask[]): WorkflowTask[] =>
+    tasks.map(task => {
+      const copy: WorkflowTask = { ...task };
+      if (copy.decisionCases) {
+        copy.decisionCases = Object.fromEntries(
+          Object.entries(copy.decisionCases).map(([label, t]) => [
+            label,
+            stampTasks(t),
+          ]),
+        );
+      }
+      if (copy.defaultCase) copy.defaultCase = stampTasks(copy.defaultCase);
+      if (copy.forkTasks) copy.forkTasks = copy.forkTasks.map(stampTasks);
+      if (copy.loopOver) copy.loopOver = stampTasks(copy.loopOver);
+
+      const status = statusByRef.get(copy.taskReferenceName);
+      return status && relevant.has(status) ? stamp(copy, status) : copy;
+    });
+
+  return { ...def, tasks: stampTasks(def.tasks ?? []) };
+}
+
 /** Task keys that hold nested task trees rather than the task's own config. */
 const CHILD_CONTAINER_KEYS = [
   "decisionCases",
