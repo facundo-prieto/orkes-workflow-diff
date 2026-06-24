@@ -26,7 +26,7 @@ Click **Load example** on the input screen to see a realistic workflow pair (SWI
 
 The app is deployed as a static page at **https://facundo-prieto.github.io/orkes-workflow-diff/** — paste mode and share links work there with no backend. PR import needs the Bun server, so static builds are produced with the build-time flag `BUN_PUBLIC_PR_IMPORT=off` (`bun run build:pages`), which hides the *From GitHub PR* tab; run `bun dev` locally to use PR import. (GitHub Pages has no runtime environment, so the flag is inlined into the bundle at build time.)
 
-To redeploy after changes: `bun run build:pages`, then push the contents of `dist/` to the `gh-pages` branch.
+Deploys are automatic: every push to `master` runs `.github/workflows/deploy-pages.yml`, which builds with `bun run build:pages` and publishes `dist/` via GitHub Actions. Trigger a manual run from the Actions tab (*Deploy to GitHub Pages* → *Run workflow*) if needed.
 
 ## Importing from a GitHub PR
 
