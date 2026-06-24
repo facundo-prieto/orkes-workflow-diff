@@ -66,8 +66,21 @@ export type VisualizerTaskStatus =
 export function diffStatusToVisualizerStatus(
   status: NodeStatus,
 ): VisualizerTaskStatus | undefined {
-  // TODO(you): implement the mapping described above (≈5 lines).
-  return undefined;
+  // Matches the classical-mode legend: green added / red removed / amber
+  // changed. COMPLETED_WITH_ERRORS is the only stripe-free amber, which reads
+  // as "modified" without implying something's wrong.
+  // ponytail: removed→FAILED (loud red+stripes); swap to CANCELED for a softer
+  // orange if "deleted" shouldn't shout.
+  switch (status) {
+    case "added":
+      return "COMPLETED";
+    case "removed":
+      return "FAILED";
+    case "changed":
+      return "COMPLETED_WITH_ERRORS";
+    case "unchanged":
+      return undefined;
+  }
 }
 
 /** Which single version a side-by-side pane is rendering. */

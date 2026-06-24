@@ -1,10 +1,10 @@
 /**
- * Side-by-side diff built on the official `orkes-workflow-visualizer` (the same
- * component the Conductor OSS UI uses). Rather than forcing both versions into
- * one merged tree, we render two native graphs — Before on the left, After on
- * the right — and let the reader compare them directly. Each version's tasks
- * are stamped with diff-derived execution statuses so each pane self-annotates
- * what changed (see `buildSideDefinition` + `diffStatusToVisualizerStatus`).
+ * Single-canvas diff built on the official `orkes-workflow-visualizer` (the
+ * same component the Conductor OSS UI uses). Both versions are merged into one
+ * after-shaped task tree — removed before-tasks spliced back into place — and
+ * every task is stamped with a diff-derived execution status, so the native
+ * Orkes renderer paints added/removed/changed inline on one graph
+ * (see `buildMergedDefinition` + `diffStatusToVisualizerStatus`).
  */
 
 import {
@@ -21,7 +21,7 @@ import { WorkflowVisualizer } from "orkes-workflow-visualizer";
 import "../../node_modules/orkes-workflow-visualizer/dist/style.css";
 import type { NodeData } from "reaflow";
 
-import { buildSideDefinition } from "../lib/mergedDefinition";
+import { buildMergedDefinition } from "../lib/mergedDefinition";
 import type { MergedGraph, MergedNode } from "../lib/workflowDiff";
 import type { WorkflowDefinition } from "../lib/workflowGraph";
 
@@ -33,28 +33,26 @@ interface OrkesGraphViewProps {
   onSelectNode: (node: MergedNode) => void;
 }
 
+const DIFF_LEGEND = [
+  { status: "added", label: "Added" },
+  { status: "removed", label: "Removed" },
+  { status: "changed", label: "Changed" },
+] as const;
+
 export function OrkesGraphView({
   before,
   after,
   graph,
   onSelectNode,
 }: OrkesGraphViewProps) {
-  const statusByRef = useMemo(
-    () => new Map(graph.nodes.map(n => [n.ref, n.status])),
-    [graph],
-  );
   const nodesByRef = useMemo(
     () => new Map(graph.nodes.map(n => [n.ref, n])),
     [graph],
   );
 
-  const beforeDef = useMemo(
-    () => buildSideDefinition(before, statusByRef, "before"),
-    [before, statusByRef],
-  );
-  const afterDef = useMemo(
-    () => buildSideDefinition(after, statusByRef, "after"),
-    [after, statusByRef],
+  const mergedDef = useMemo(
+    () => buildMergedDefinition(before, after),
+    [before, after],
   );
 
   const handleClick = (_e: unknown, node: NodeData) => {
@@ -63,37 +61,17 @@ export function OrkesGraphView({
   };
 
   return (
-    <div className="orkes-compare">
-      <OrkesPane side="before" definition={beforeDef} onClick={handleClick} />
-      <OrkesPane side="after" definition={afterDef} onClick={handleClick} />
-    </div>
-  );
-}
-
-function OrkesPane({
-  side,
-  definition,
-  onClick,
-}: {
-  side: "before" | "after";
-  definition: WorkflowDefinition | null;
-  onClick: (e: unknown, node: NodeData) => void;
-}) {
-  const label = side === "before" ? "Before" : "After";
-  return (
-    <section className="orkes-pane">
-      <header className="orkes-pane-title">{label}</header>
-      <div className="orkes-pane-canvas">
-        {definition ? (
-          <FittedVisualizer definition={definition} onClick={onClick} />
-        ) : (
-          <div className="orkes-pane-empty">
-            No {label.toLowerCase()} version — this workflow was{" "}
-            {side === "before" ? "added" : "deleted"}.
-          </div>
-        )}
+    <div className="orkes-canvas">
+      <FittedVisualizer definition={mergedDef} onClick={handleClick} />
+      <div className="orkes-legend">
+        {DIFF_LEGEND.map(item => (
+          <span key={item.status} className="orkes-legend-item">
+            <span className={`orkes-legend-swatch swatch-${item.status}`} />
+            {item.label}
+          </span>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }
 

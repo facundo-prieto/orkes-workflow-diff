@@ -760,6 +760,10 @@ pre,
   flex-direction: column;
   min-height: 0;
   box-shadow: -4px 0 14px rgba(16, 42, 67, 0.08);
+  /* Sit above the graph canvas's positioned overlays (zoom controls/legend
+     carry z-index:10), so the panel is always clickable. */
+  position: relative;
+  z-index: 20;
 }
 
 .drawer-header {
@@ -855,6 +859,9 @@ pre,
   font-size: 12px;
   line-height: 1.5;
   overflow: auto;
+  /* Wrap long values (URIs, expressions) instead of scrolling sideways. */
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .drawer-diff {
@@ -886,40 +893,55 @@ pre,
 
 /* ---------- Orkes-native graph renderer ---------- */
 
-.orkes-compare {
+.orkes-canvas {
   flex: 1;
   min-width: 0;
   height: 100%;
-  display: flex;
-  gap: 1px;
-  background: var(--border); /* shows through the 1px gap as a divider */
-}
-
-.orkes-pane {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.orkes-pane-title {
-  flex: none;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--border);
-}
-
-.orkes-pane-canvas {
-  flex: 1;
-  min-height: 0;
   position: relative;
   overflow: hidden;
   background: #e6e6e6; /* matches orkes-workflow-visualizer canvas */
+}
+
+/* Diff color key, top-right so it never floats over the graph's lower nodes
+   or near the drawer divider when the details panel opens. */
+.orkes-legend {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 14px;
+  padding: 7px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+}
+
+.orkes-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orkes-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 2px solid;
+}
+
+.swatch-added {
+  border-color: var(--added);
+}
+
+.swatch-removed {
+  border-color: var(--removed);
+}
+
+.swatch-changed {
+  border-color: var(--changed);
 }
 
 /* Fixed viewport; the graph is CSS-scaled inside it to fit (see
@@ -986,16 +1008,12 @@ pre,
   overflow: visible !important;
 }
 
-.orkes-pane-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 24px;
-  text-align: center;
-  color: var(--text-muted);
-}
-
 .renderer-toggle {
   margin-left: 4px;
+}
+
+/* Before/After/Diff toggle inside the node details drawer. */
+.drawer-view-toggle {
+  margin: 0 18px;
+  align-self: flex-start;
 }
